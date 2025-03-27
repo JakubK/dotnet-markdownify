@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Dotnet.Markdownify.Console\Dotnet.Markdownify.Console.csproj" Type="Classic C#" />
+  <Project Path="Dotnet.Markdownify/Dotnet.Markdownify.csproj" Type="Classic C#" />
+</Solution>
