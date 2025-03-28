@@ -14,6 +14,30 @@ public class MarkdownConverter
         return await ProcessTag(doc.DocumentNode, []);
     }
     
+    private static readonly Dictionary<string, Func<HtmlNode, string, List<string>, string>> ConversionFunctions =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["div"] = ConvertDiv,
+            ["article"] = ConvertDiv,
+            ["section"] = ConvertDiv,
+            ["p"] = ConvertDiv,
+            ["ul"] = ConvertUl,
+            ["ol"] = ConvertUl,
+            ["li"] = ConvertLi,
+            ["a"] = ConvertA,
+            ["hr"] = ConvertHr,
+            ["b"] = ConvertB,
+            ["strong"] = ConvertB,
+            ["i"] = ConvertI,
+            ["pre"] = ConvertPre,
+            ["code"] = ConvertCode,
+            ["img"] = ConvertImg,
+            ["table"] = ConvertTable,
+            ["tr"] = ConvertTr,
+            ["th"] = ConvertTd_Th,
+            ["td"] = ConvertTd_Th
+        };
+    
     private async Task<string> ProcessTag(HtmlNode node, List<string> parentTags)
     {
         if (TagConsts.MarkdownIgnoreTags.Contains(node.Name))
@@ -55,80 +79,20 @@ public class MarkdownConverter
             return NoOpTransform;
         }
 
-        if (nodeName == "div" || nodeName == "article" || nodeName == "section" || nodeName == "p")
+        if (ConversionFunctions.TryGetValue(nodeName, out var conversionFunction))
         {
-            return ConvertDiv;
+            return conversionFunction;
         }
-
-        if (nodeName == "ul" || nodeName == "ol")
-        {
-            return ConvertUl;
-        }
-
-        if (nodeName == "li")
-        {
-            return ConvertLi;
-        }
-
-        if (nodeName == "a")
-        {
-            return ConvertA;
-        }
-
-        if (nodeName == "hr")
-        {
-            return ConvertHr;
-        }
-
-        if (nodeName == "b" || nodeName == "strong")
-        {
-            return ConvertB;
-        }
-
-        if (nodeName == "i")
-        {
-            return ConvertI;
-        }
-
-        if (nodeName == "pre")
-        {
-            return ConvertPre;
-        }
-
-        if (nodeName == "code")
-        {
-            return ConvertCode;
-        }
-
-        if (nodeName == "img")
-        {
-            return ConvertImg;
-        }
-
-        if (nodeName == "table")
-        {
-            return ConvertTable;
-        }
-
-        if (nodeName == "tr")
-        {
-            return ConvertTr;
-        }
-
-        if (nodeName == "th" || nodeName == "td")
-        {
-            return ConvertTd_Th;
-        }
+        
         if (RegexConsts.ReHtmlHeading.IsMatch(nodeName))
         {
             return ConvertHeader;
         }
-
         
         return NoOpTransform;
     }
 
-    private string ConvertImg(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertImg(HtmlNode node, string text, List<string> parentTags)
     {
         var alt = node.GetAttributeValue("alt", string.Empty); 
         var src = node.GetAttributeValue("src", string.Empty);
@@ -136,7 +100,7 @@ public class MarkdownConverter
         return $"![{alt}]({src})";
     }
 
-    private string ConvertTr(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertTr(HtmlNode node, string text, List<string> parentTags)
     {
         var tableInferHeader = false;
         var cells = node.SelectNodes(".//td|.//th")?.ToList() ?? new List<HtmlNode>();
@@ -178,19 +142,19 @@ public class MarkdownConverter
         return overline + "| " + node.InnerText.Trim() + "\n" + underline;
     }
 
-    private string ConvertTd_Th(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertTd_Th(HtmlNode node, string text, List<string> parentTags)
     {
         var colspan = node.GetAttributeValue("colspan", 1);
         var colSpanSuffix = string.Concat(Enumerable.Repeat(" |", colspan));
         return ' ' + text.Trim().Replace("\n", " ") + colSpanSuffix;
     }
 
-    private string ConvertTable(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertTable(HtmlNode node, string text, List<string> parentTags)
     {
         return $"\n\n{text}\n\n";
     }
     
-    private string ConvertCode(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertCode(HtmlNode node, string text, List<string> parentTags)
     {
         if (parentTags.Contains("pre"))
         {
@@ -199,17 +163,17 @@ public class MarkdownConverter
         return $"`{text}`";
     }
 
-    private string ConvertB(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertB(HtmlNode node, string text, List<string> parentTags)
     {
         return $"**{text}**";
     }
 
-    private string ConvertI(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertI(HtmlNode node, string text, List<string> parentTags)
     {
         return $"_{text}_";
     }
 
-    private string ConvertLi(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertLi(HtmlNode node, string text, List<string> parentTags)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -228,8 +192,7 @@ public class MarkdownConverter
             var prev = node.PreviousSibling;
             while (prev != null)
             {
-                if (prev.Name != "#text")
-                    count++;
+                count++;
                 prev = prev.PreviousSibling;
             }
 
@@ -262,12 +225,12 @@ public class MarkdownConverter
         return $"{text}\n";
     }
 
-    private string ConvertHr(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertHr(HtmlNode node, string text, List<string> parentTags)
     {
         return "\n\n---\n\n";
     }
 
-    private string ConvertUl(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertUl(HtmlNode node, string text, List<string> parentTags)
     {
         var nextSibling = node.NextSibling;
         if (parentTags.Contains("li"))
@@ -282,21 +245,21 @@ public class MarkdownConverter
         return $"\n\n{text}";
     }
     
-    private string ConvertA(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertA(HtmlNode node, string text, List<string> parentTags)
     {
         var href = node.GetAttributeValue("href", string.Empty);
 
         return $"[{text.Trim()}]({href.Trim()})";
     }
 
-    private string ConvertHeader(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertHeader(HtmlNode node, string text, List<string> parentTags)
     {
         var hLevel = int.Parse(RegexConsts.ReHtmlHeading.Match(node.Name).Groups[1].Value);
         var mdHeadingPrefix = new string('#', hLevel);
         return $"\n{mdHeadingPrefix} {text}\n";
     }
 
-    private string ConvertDiv(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertDiv(HtmlNode node, string text, List<string> parentTags)
     {
         text = text.Trim();
         if (string.IsNullOrEmpty(text))
@@ -307,7 +270,7 @@ public class MarkdownConverter
         return $"\n{text}\n";
     }
 
-    private string ConvertPre(HtmlNode node, string text, List<string> parentTags)
+    private static string ConvertPre(HtmlNode node, string text, List<string> parentTags)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -318,13 +281,13 @@ public class MarkdownConverter
         return x;
     }
 
-    private string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
+    private static string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
     {
         Console.WriteLine("Missing handler for " + node.Name);
         return WebUtility.HtmlDecode(text);
     }
 
-    private async Task<string> ProcessElement(HtmlNode? node, List<string> parentTags)
+    private  async Task<string> ProcessElement(HtmlNode? node, List<string> parentTags)
     {
         if (node.NodeType == HtmlNodeType.Text)
         {
