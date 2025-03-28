@@ -1,4 +1,5 @@
-﻿using Dotnet.Markdownify.Consts;
+﻿using System.Net;
+using Dotnet.Markdownify.Consts;
 using HtmlAgilityPack;
 
 namespace Dotnet.Markdownify;
@@ -64,15 +65,7 @@ public class MarkdownConverter
             return NoOpTransform;
         }
 
-        if (nodeName == "div")
-        {
-            return ConvertDiv;
-        }
-        if(nodeName == "span")
-        {
-            return ConvertDiv;
-        }
-        if (nodeName == "p")
+        if (nodeName == "div" || nodeName == "article" || nodeName == "section" || nodeName == "p")
         {
             return ConvertDiv;
         }
@@ -91,6 +84,31 @@ public class MarkdownConverter
         {
             return ConvertA;
         }
+
+        if (nodeName == "hr")
+        {
+            return ConvertHr;
+        }
+
+        if (nodeName == "b" || nodeName == "strong")
+        {
+            return ConvertB;
+        }
+
+        if (nodeName == "i")
+        {
+            return ConvertI;
+        }
+
+        if (nodeName == "pre")
+        {
+            return ConvertPre;
+        }
+
+        if (nodeName == "code")
+        {
+            return ConvertCode;
+        }
         if (RegexConsts.ReHtmlHeading.IsMatch(nodeName))
         {
             return ConvertHeader;
@@ -98,6 +116,25 @@ public class MarkdownConverter
 
         
         return NoOpTransform;
+    }
+    
+    private string ConvertCode(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (parentTags.Contains("pre"))
+        {
+            return text;
+        }
+        return $"`{text}`";
+    }
+
+    private string ConvertB(HtmlNode node, string text, List<string> parentTags)
+    {
+        return $"**{text}**";
+    }
+
+    private string ConvertI(HtmlNode node, string text, List<string> parentTags)
+    {
+        return $"_{text}_";
     }
 
     private string ConvertLi(HtmlNode node, string text, List<string> parentTags)
@@ -144,13 +181,18 @@ public class MarkdownConverter
             bullet = bullets[depth % bullets.Length].ToString();
         }
 
-        bullet = bullet + " ";
+        bullet += " ";
         var bulletWidth = bullet.Length;
         var bulletIndent = new string(' ', bulletWidth);
 
         text = RegexConsts.ReLineWithContent.Replace(text, match => match.Groups[1].Value.Length > 0 ? bulletIndent + match.Groups[1].Value : string.Empty);
         text = bullet + text.Substring(bulletWidth);
         return $"{text}\n";
+    }
+
+    private string ConvertHr(HtmlNode node, string text, List<string> parentTags)
+    {
+        return "\n\n---\n\n";
     }
 
     private string ConvertUl(HtmlNode node, string text, List<string> parentTags)
@@ -208,10 +250,21 @@ public class MarkdownConverter
         return $"\n{text}\n";
     }
 
+    private string ConvertPre(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        var x = $"\n\n```\n{text}\n```\n\n";
+        return x;
+    }
+
     private string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
     {
         Console.WriteLine("Missing handler for " + node.Name);
-        return text;
+        return WebUtility.HtmlDecode(text);
     }
 
     private async Task<string> ProcessElement(HtmlNode? node, List<string> parentTags)
@@ -222,8 +275,7 @@ public class MarkdownConverter
             return text;
         }
         
-        var tag = await ProcessTag(node, parentTags);
-        return tag;
+        return await ProcessTag(node, parentTags);
     }
 
     private string ProcessText(HtmlNode node, List<string> parentTags)

@@ -2,7 +2,7 @@
 
 public static class TagConsts
 {
-    public static string[] WhiteSpaceRemoveTags =
+    public static readonly string[] WhiteSpaceRemoveTags =
     [
         "p", "blockquote", "article",
         "div", "section",
@@ -12,23 +12,23 @@ public static class TagConsts
         "tr", "td", "th"
     ];
 
-    public static string[] TableCellTags =
+    public static readonly string[] TableCellTags =
     [
         "td", "th"
     ];
 
-    public static string[] ListTags =
+    public static readonly string[] ListTags =
     [
         "ol", "ul"
     ];
 
-    public static string[] PreformattedTags =
+    public static readonly string[] PreformattedTags =
     [
         "pre", "code", "kbd", "samp"
     ];
 
-    public static string[] MarkdownIgnoreTags =
+    public static readonly string[] MarkdownIgnoreTags =
     [
-        "script", "link", "path", "button", "meta", "img", "svg", "title", "style", "head", "code", "iframe"
+        "script", "link", "path", "button", "meta", "svg", "title", "style", "head", "iframe", "font"
     ];
 }
