@@ -21,7 +21,7 @@ public class MarkdownConverter
             return string.Empty;
         }
         
-        var childrenToConvert = node.ChildNodes.Where(x => !CanIgnore(x));
+        var childrenToConvert = node.ChildNodes;
         
         var parentTagsForChildren = new List<string>(parentTags);
         parentTagsForChildren.Add(node.Name);
@@ -111,6 +111,11 @@ public class MarkdownConverter
             return ConvertCode;
         }
 
+        if (nodeName == "img")
+        {
+            return ConvertImg;
+        }
+
         if (nodeName == "table")
         {
             return ConvertTable;
@@ -132,6 +137,14 @@ public class MarkdownConverter
 
         
         return NoOpTransform;
+    }
+
+    private string ConvertImg(HtmlNode node, string text, List<string> parentTags)
+    {
+        var alt = node.GetAttributeValue("alt", string.Empty); 
+        var src = node.GetAttributeValue("src", string.Empty);
+
+        return $"![{alt}]({src})";
     }
 
     private string ConvertTr(HtmlNode node, string text, List<string> parentTags)
@@ -350,112 +363,6 @@ public class MarkdownConverter
 
     private string ProcessText(HtmlNode node, List<string> parentTags)
     {
-        parentTags = parentTags.Count > 0 ? parentTags : new List<string>();
-
-        var text = node.InnerText;
-        if (!parentTags.Contains("pre"))
-        {
-            // TODO: Normalize whitespace
-        }
-        
-        // Escape special characters if not inside preformatted or code element
-        if (!parentTags.Contains("_noformat"))
-        {
-            text = Escape(text);
-        }
-        
-        // Remove leading/trailing whitespace
-        if (ShouldRemoveWhitespaceOutside(node.PreviousSibling) ||
-            ShouldRemoveWhitespaceInside(node.ParentNode) && node.PreviousSibling == null)
-        {
-            text = text.TrimStart();
-        }
-
-        if (ShouldRemoveWhitespaceOutside(node.NextSibling) ||
-            ShouldRemoveWhitespaceInside(node.ParentNode) && node.NextSibling == null)
-        {
-            text = text.TrimEnd();
-        }
-        
-        return text;
-    }
-
-    private string Escape(string? text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        return text;
-    }
-
-    // Return to remove whitespace immediately inside a block-level element.
-    private bool ShouldRemoveWhitespaceInside(HtmlNode? node)
-    {
-        if (node is null)
-        {
-            return false;
-        }
-
-        if (RegexConsts.ReHtmlHeading.Matches(node.Name).Count > 0)
-        {
-            return true;
-        }
-
-        return TagConsts.WhiteSpaceRemoveTags.Contains(node.Name);
-    }
-
-    private bool CanIgnore(HtmlNode? node)
-    {
-        var shouldRemoveInside = ShouldRemoveWhitespaceInside(node);
-        if (node == null)
-        {
-            return true;
-        }
-        if (node.NodeType == HtmlNodeType.Element)
-        {
-            // Tags (elements) are always processed
-            return false;
-        }
-        if (node.NodeType == HtmlNodeType.Comment || node.NodeType == HtmlNodeType.Document)
-        {
-            // Comment and Doctype elements are always ignored
-            return true;
-        }
-        if (node.NodeType == HtmlNodeType.Text)
-        {
-            string text = node.InnerText.Trim();
-            if (!string.IsNullOrEmpty(text))
-            {
-                // Non-whitespace text nodes are always processed
-                return false;
-            }
-
-            // Handling whitespace based on surrounding nodes
-            if (shouldRemoveInside)
-            {
-                // Inside block elements, ignore adjacent whitespace elements
-                return true;
-            }
-
-            if (ShouldRemoveWhitespaceOutside(node.PreviousSibling) || ShouldRemoveWhitespaceOutside(node.NextSibling))
-            {
-                // Outside block elements, ignore adjacent whitespace elements
-                return true;
-            }
-
-            return false;
-        }
-        
-        throw new ArgumentException($"Unexpected element type: {node.NodeType}");
-    }
-
-    // Return to remove whitespace immediately outside a block-level element.
-    private bool ShouldRemoveWhitespaceOutside(HtmlNode? node)
-    {
-        if (node != null && node.Name == "pre")
-            return true;
-        return ShouldRemoveWhitespaceInside(node);
+        return node.InnerText;
     }
 }
