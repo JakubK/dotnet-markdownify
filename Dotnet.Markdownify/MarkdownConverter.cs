@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Text;
 using Dotnet.Markdownify.Consts;
 using HtmlAgilityPack;
 
@@ -109,6 +110,21 @@ public class MarkdownConverter
         {
             return ConvertCode;
         }
+
+        if (nodeName == "table")
+        {
+            return ConvertTable;
+        }
+
+        if (nodeName == "tr")
+        {
+            return ConvertTr;
+        }
+
+        if (nodeName == "th" || nodeName == "td")
+        {
+            return ConvertTd_Th;
+        }
         if (RegexConsts.ReHtmlHeading.IsMatch(nodeName))
         {
             return ConvertHeader;
@@ -116,6 +132,60 @@ public class MarkdownConverter
 
         
         return NoOpTransform;
+    }
+
+    private string ConvertTr(HtmlNode node, string text, List<string> parentTags)
+    {
+        var tableInferHeader = false;
+        var cells = node.SelectNodes(".//td|.//th")?.ToList() ?? new List<HtmlNode>();
+        var isFirstRow = node.PreviousSibling == null;
+        var isHeadRow = cells.All(cell => cell.Name == "th") ||
+                         (node.ParentNode.Name == "thead" && node.ParentNode.SelectNodes(".//tr")?.Count == 1);
+        var isHeadRowMissing = (isFirstRow && node.ParentNode.Name != "tbody") ||
+                                (isFirstRow && node.ParentNode.Name == "tbody" &&
+                                 node.ParentNode.ParentNode.SelectNodes(".//thead")?.Count < 1);
+
+        var overline = new StringBuilder();
+        var underline = new StringBuilder();
+        var fullColspan = 0;
+
+        foreach (var cell in cells)
+        {
+            if (cell.Attributes["colspan"] != null && int.TryParse(cell.Attributes["colspan"].Value, out int colspan))
+            {
+                fullColspan += colspan;
+            }
+            else
+            {
+                fullColspan += 1;
+            }
+        }
+
+        if ((isHeadRow || (isHeadRowMissing && tableInferHeader)) && isFirstRow)
+        {
+            underline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("---", fullColspan)) + " |");
+        }
+        else if ((isHeadRowMissing && !tableInferHeader) ||
+                 (isFirstRow && (node.ParentNode.Name == "table" ||
+                                 (node.ParentNode.Name == "tbody" && node.ParentNode.PreviousSibling == null))))
+        {
+            overline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("", fullColspan)) + " |");
+            overline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("---", fullColspan)) + " |");
+        }
+
+        return overline + "| " + node.InnerText.Trim() + "\n" + underline;
+    }
+
+    private string ConvertTd_Th(HtmlNode node, string text, List<string> parentTags)
+    {
+        var colspan = node.GetAttributeValue("colspan", 1);
+        var colSpanSuffix = string.Concat(Enumerable.Repeat(" |", colspan));
+        return ' ' + text.Trim().Replace("\n", " ") + colSpanSuffix;
+    }
+
+    private string ConvertTable(HtmlNode node, string text, List<string> parentTags)
+    {
+        return $"\n\n{text}\n\n";
     }
     
     private string ConvertCode(HtmlNode node, string text, List<string> parentTags)
