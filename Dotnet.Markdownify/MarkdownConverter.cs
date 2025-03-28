@@ -64,15 +64,10 @@ public class MarkdownConverter
         
         // Apply this tag final conversion function
         var convertFn = GetConversionFunctionCached(node.Name);
-        if (convertFn != null)
-        {
-            text = convertFn(node, text, parentTags);
-        }
-
-        return text;
+        return convertFn(node, text, parentTags);
     }
 
-    private Func<HtmlNode, string, List<string>, string>?  GetConversionFunctionCached(string nodeName)
+    private Func<HtmlNode, string, List<string>, string>  GetConversionFunctionCached(string nodeName)
     {
         if (TagConsts.MarkdownIgnoreTags.Contains(nodeName))
         {
@@ -117,7 +112,8 @@ public class MarkdownConverter
 
         foreach (var cell in cells)
         {
-            if (cell.Attributes["colspan"] != null && int.TryParse(cell.Attributes["colspan"].Value, out int colspan))
+            var cellColspan = cell.GetAttributeValue("colspan", string.Empty);
+            if (cellColspan != string.Empty && int.TryParse(cellColspan, out int colspan))
             {
                 fullColspan += colspan;
             }
@@ -181,7 +177,7 @@ public class MarkdownConverter
         }
 
         // Determine which character to use for bullet
-        var bullet = string.Empty;
+        string bullet;
         var parent = node.ParentNode;
         if (parent != null && parent.Name == "ol")
         {
@@ -277,8 +273,7 @@ public class MarkdownConverter
             return string.Empty;
         }
 
-        var x = $"\n\n```\n{text}\n```\n\n";
-        return x;
+        return $"\n\n```\n{text}\n```\n\n";
     }
 
     private static string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
