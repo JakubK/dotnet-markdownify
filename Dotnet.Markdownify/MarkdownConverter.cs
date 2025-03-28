@@ -25,18 +25,7 @@ public class MarkdownConverter
         
         var parentTagsForChildren = new List<string>(parentTags);
         parentTagsForChildren.Add(node.Name);
-
-        // Add _inline pseudo tag for header or table cell
-        if (RegexConsts.ReHtmlHeading.Matches(node.Name).Count > 0 || TagConsts.TableCellTags.Contains(node.Name))
-        {
-            parentTagsForChildren.Add("_inline");
-        }
-
-        if (TagConsts.PreformattedTags.Contains(node.Name))
-        {
-            parentTagsForChildren.Add("_noformat");
-        }
-
+        
         var childStrings = new List<string>();
         foreach (var child in childrenToConvert)
         {
@@ -295,11 +284,6 @@ public class MarkdownConverter
     
     private string ConvertA(HtmlNode node, string text, List<string> parentTags)
     {
-        if (parentTags.Contains("_noformat"))
-        {
-            return text;
-        }
-        
         var href = node.GetAttributeValue("href", string.Empty);
 
         return $"[{text.Trim()}]({href.Trim()})";
@@ -307,11 +291,6 @@ public class MarkdownConverter
 
     private string ConvertHeader(HtmlNode node, string text, List<string> parentTags)
     {
-        if (parentTags.Contains("_inline"))
-        {
-            return text;
-        }
-
         var hLevel = int.Parse(RegexConsts.ReHtmlHeading.Match(node.Name).Groups[1].Value);
         var mdHeadingPrefix = new string('#', hLevel);
         return $"\n{mdHeadingPrefix} {text}\n";
@@ -319,11 +298,6 @@ public class MarkdownConverter
 
     private string ConvertDiv(HtmlNode node, string text, List<string> parentTags)
     {
-        if (parentTags.Contains("_inline"))
-        {
-            return " " + text.Trim() + " ";
-        }
-        
         text = text.Trim();
         if (string.IsNullOrEmpty(text))
         {
