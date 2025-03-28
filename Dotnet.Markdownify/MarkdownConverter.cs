@@ -9,7 +9,6 @@ public class MarkdownConverter
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
-
         return await ProcessTag(doc.DocumentNode, []);
     }
     
@@ -44,48 +43,15 @@ public class MarkdownConverter
         }
         
         childStrings = childStrings.Where(x => !string.IsNullOrEmpty(x)).ToList();
-
         
-        if (node?.Name == "pre" || node?.ParentNode?.Name == "pre") {
-
-        }
-        else
-        {
-            var updatedChildStrings = new List<string> { string.Empty };
-            foreach (var childString in childStrings)
-            {
-                var match = RegexConsts.ReExtractNewlines.Match(childString);
-                var leadingNl = match.Groups[1].Value;
-                var content = match.Groups[2].Value;
-                var trailingNl = match.Groups[3].Value;
-                
-                if (updatedChildStrings.Count > 0 && leadingNl != null)
-                {
-                    var prevTrailingNl = updatedChildStrings.Last();
-                    updatedChildStrings.RemoveAt(updatedChildStrings.Count - 1);
-
-                    var numNewlines = Math.Min(2, Math.Max(prevTrailingNl.Length, leadingNl.Length));
-                    leadingNl = new string('\n', numNewlines);
-                }
-
-                updatedChildStrings.AddRange([leadingNl, content, trailingNl]);
-            }
-            
-            childStrings = updatedChildStrings;
-        }
-
-        
-
         // Join all child text strings into a single string
         var text = string.Join(string.Empty, childStrings);
         
         // Apply this tag final conversion function
         var convertFn = GetConversionFunctionCached(node.Name);
-        // Console.WriteLine(text);
         if (convertFn != null)
         {
             text = convertFn(node, text, parentTags);
-            // Console.WriteLine("Converted " + node.Name + " into " + text);
         }
 
         return text;
@@ -97,23 +63,167 @@ public class MarkdownConverter
         {
             return NoOpTransform;
         }
-        //Console.WriteLine(nodeName);
+
+        if (nodeName == "div")
+        {
+            return ConvertDiv;
+        }
+        if(nodeName == "span")
+        {
+            return ConvertDiv;
+        }
+        if (nodeName == "p")
+        {
+            return ConvertDiv;
+        }
+
+        if (nodeName == "ul" || nodeName == "ol")
+        {
+            return ConvertUl;
+        }
+
+        if (nodeName == "li")
+        {
+            return ConvertLi;
+        }
+
+        if (nodeName == "a")
+        {
+            return ConvertA;
+        }
+        if (RegexConsts.ReHtmlHeading.IsMatch(nodeName))
+        {
+            return ConvertHeader;
+        }
+
         
         return NoOpTransform;
     }
 
+    private string ConvertLi(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return "\n";
+        }
+
+        // Determine which character to use for bullet
+        var bullet = string.Empty;
+        var parent = node.ParentNode;
+        if (parent != null && parent.Name == "ol")
+        {
+            var olStart = parent.GetAttributeValue("start", string.Empty);
+            var olStartValue = string.IsNullOrEmpty(olStart) ? 1 : int.Parse(olStart);
+
+            var count = 0;
+            var prev = node.PreviousSibling;
+            while (prev != null)
+            {
+                if (prev.Name != "#text")
+                    count++;
+                prev = prev.PreviousSibling;
+            }
+
+            bullet = $"{olStartValue + count}.";
+        }
+        else
+        {
+            var depth = -1;
+            var el = node;
+            while (el != null)
+            {
+                if (el.Name == "ul")
+                {
+                    depth++;
+                }
+
+                el = el.ParentNode;
+            }
+
+            var bullets = "*+-";
+            bullet = bullets[depth % bullets.Length].ToString();
+        }
+
+        bullet = bullet + " ";
+        var bulletWidth = bullet.Length;
+        var bulletIndent = new string(' ', bulletWidth);
+
+        text = RegexConsts.ReLineWithContent.Replace(text, match => match.Groups[1].Value.Length > 0 ? bulletIndent + match.Groups[1].Value : string.Empty);
+        text = bullet + text.Substring(bulletWidth);
+        return $"{text}\n";
+    }
+
+    private string ConvertUl(HtmlNode node, string text, List<string> parentTags)
+    {
+        var nextSibling = node.NextSibling;
+        if (parentTags.Contains("li"))
+        {
+            // Remove trailing newline if in nested list
+            return text + text.TrimEnd();
+        }
+        if (nextSibling != null && !TagConsts.ListTags.Contains(nextSibling.Name))
+        {
+            return $"\n\n{text}\n";
+        }
+        return $"\n\n{text}";
+    }
+    
+    private string ConvertA(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (parentTags.Contains("_noformat"))
+        {
+            return text;
+        }
+        
+        var href = node.GetAttributeValue("href", string.Empty);
+
+        return $"[{text.Trim()}]({href.Trim()})";
+    }
+
+    private string ConvertHeader(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (parentTags.Contains("_inline"))
+        {
+            return text;
+        }
+
+        var hLevel = int.Parse(RegexConsts.ReHtmlHeading.Match(node.Name).Groups[1].Value);
+        var mdHeadingPrefix = new string('#', hLevel);
+        return $"\n{mdHeadingPrefix} {text}\n";
+    }
+
+    private string ConvertDiv(HtmlNode node, string text, List<string> parentTags)
+    {
+        if (parentTags.Contains("_inline"))
+        {
+            return " " + text.Trim() + " ";
+        }
+        
+        text = text.Trim();
+        if (string.IsNullOrEmpty(text))
+        {
+            return string.Empty;
+        }
+
+        return $"\n{text}\n";
+    }
+
     private string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
     {
-        return "" + text + "";
+        Console.WriteLine("Missing handler for " + node.Name);
+        return text;
     }
 
     private async Task<string> ProcessElement(HtmlNode? node, List<string> parentTags)
     {
         if (node.NodeType == HtmlNodeType.Text)
         {
-            return ProcessText(node, parentTags);
+            var text = ProcessText(node, parentTags);
+            return text;
         }
-        return await ProcessTag(node, parentTags);
+        
+        var tag = await ProcessTag(node, parentTags);
+        return tag;
     }
 
     private string ProcessText(HtmlNode node, List<string> parentTags)

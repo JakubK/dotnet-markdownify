@@ -17,6 +17,11 @@ public static class TagConsts
         "td", "th"
     ];
 
+    public static string[] ListTags =
+    [
+        "ol", "ul"
+    ];
+
     public static string[] PreformattedTags =
     [
         "pre", "code", "kbd", "samp"
@@ -24,6 +29,6 @@ public static class TagConsts
 
     public static string[] MarkdownIgnoreTags =
     [
-        "script", "link", "path", "button", "meta", "img", "svg", "title", "style", "head", "code"
+        "script", "link", "path", "button", "meta", "img", "svg", "title", "style", "head", "code", "iframe"
     ];
 }
