@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="Dotnet.Markdownify.Console\Dotnet.Markdownify.Console.csproj" Type="Classic C#" />
+  <Project Path="Dotnet.Markdownify.Tests\Dotnet.Markdownify.Tests.csproj" Type="Classic C#" />
   <Project Path="Dotnet.Markdownify.Tool\Dotnet.Markdownify.Tool.csproj" Type="Classic C#" />
   <Project Path="Dotnet.Markdownify/Dotnet.Markdownify.csproj" Type="Classic C#" />
 </Solution>

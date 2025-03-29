@@ -2,18 +2,17 @@
 using System.Text;
 using Dotnet.Markdownify.Consts;
 using HtmlAgilityPack;
+using static Dotnet.Markdownify.Consts.FormattingConsts;
 
 namespace Dotnet.Markdownify;
 
 public class MarkdownConverter
 {
-    private static readonly string DoubleNewLine = string.Concat(Enumerable.Repeat(Environment.NewLine, 2));
-    private static readonly string NewLine = Environment.NewLine;
-    
     public async Task<string> ConvertAsync(string html)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
+        
         return await ProcessTag(doc.DocumentNode, []);
     }
     
@@ -47,7 +46,7 @@ public class MarkdownConverter
         {
             return string.Empty;
         }
-        
+
         var childrenToConvert = node.ChildNodes;
         
         var parentTagsForChildren = new List<string>(parentTags);
@@ -60,14 +59,15 @@ public class MarkdownConverter
             childStrings.Add(converted);
         }
         
-        childStrings = childStrings.Where(x => !string.IsNullOrEmpty(x)).ToList();
+        childStrings = childStrings.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
         
         // Join all child text strings into a single string
         var text = string.Join(string.Empty, childStrings);
         
         // Apply this tag final conversion function
         var convertFn = GetConversionFunction(node.Name);
-        return convertFn(node, text, parentTags);
+        var value = convertFn(node, text, parentTags);
+        return value;
     }
 
     private Func<HtmlNode, string, List<string>, string>  GetConversionFunction(string nodeName)
@@ -176,7 +176,7 @@ public class MarkdownConverter
     {
         if (string.IsNullOrEmpty(text))
         {
-            return NewLine;
+            return string.Empty;
         }
 
         // Determine which character to use for bullet
@@ -191,7 +191,10 @@ public class MarkdownConverter
             var prev = node.PreviousSibling;
             while (prev != null)
             {
-                count++;
+                if (prev.NodeType == HtmlNodeType.Element)
+                {
+                    count++;
+                }
                 prev = prev.PreviousSibling;
             }
 
@@ -211,8 +214,7 @@ public class MarkdownConverter
                 el = el.ParentNode;
             }
 
-            var bullets = "*+-";
-            bullet = bullets[depth % bullets.Length].ToString();
+            bullet = "-";
         }
 
         bullet += " ";
@@ -231,17 +233,15 @@ public class MarkdownConverter
 
     private static string ConvertUl(HtmlNode node, string text, List<string> parentTags)
     {
-        var nextSibling = node.NextSibling;
+        Console.WriteLine(node.ChildNodes.Count);
+        // Remove all text child nodes
         if (parentTags.Contains("li"))
         {
             // Remove trailing newline if in nested list
-            return text + text.TrimEnd();
+            return text.TrimEnd();
         }
-        if (nextSibling != null && !TagConsts.ListTags.Contains(nextSibling.Name))
-        {
-            return $"{DoubleNewLine}{text}{NewLine}";
-        }
-        return $"{DoubleNewLine}{text}";
+        
+        return text;
     }
     
     private static string ConvertA(HtmlNode node, string text, List<string> parentTags)
@@ -292,6 +292,10 @@ public class MarkdownConverter
 
     private string ProcessText(HtmlNode node, List<string> parentTags)
     {
+        if (string.IsNullOrWhiteSpace(node.InnerText))
+        {
+            return node.InnerText.Trim();
+        }
         return node.InnerText;
     }
 }
