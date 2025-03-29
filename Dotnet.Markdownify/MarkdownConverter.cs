@@ -10,8 +10,11 @@ public class MarkdownConverter
 {
     public async Task<string> ConvertAsync(string html)
     {
+        var cleaner = new HtmlCleaner();
+        var cleanHtml = cleaner.CleanHtml(html);
+        
         var doc = new HtmlDocument();
-        doc.LoadHtml(html);
+        doc.LoadHtml(cleanHtml);
         
         return await ProcessTag(doc.DocumentNode, []);
     }
@@ -23,8 +26,6 @@ public class MarkdownConverter
             ["article"] = ConvertDiv,
             ["section"] = ConvertDiv,
             ["p"] = ConvertDiv,
-            ["ul"] = ConvertUl,
-            ["ol"] = ConvertUl,
             ["li"] = ConvertLi,
             ["a"] = ConvertA,
             ["hr"] = ConvertHr,
@@ -202,18 +203,6 @@ public class MarkdownConverter
         }
         else
         {
-            var depth = -1;
-            var el = node;
-            while (el != null)
-            {
-                if (el.Name == "ul")
-                {
-                    depth++;
-                }
-
-                el = el.ParentNode;
-            }
-
             bullet = "-";
         }
 
@@ -223,25 +212,23 @@ public class MarkdownConverter
 
         text = RegexConsts.ReLineWithContent.Replace(text, match => match.Groups[1].Value.Length > 0 ? bulletIndent + match.Groups[1].Value : string.Empty);
         text = bullet + text.Substring(bulletWidth);
+        
+        if (node.ParentNode.FirstChild == node && parentTags.Contains("li"))
+        {
+            return $"{NewLine}{text}{NewLine}";
+        }
+        
+        if (node.ParentNode.LastChild == node && parentTags.Contains("li"))
+        {
+            return $"{text}";
+        }
+        
         return $"{text}{NewLine}";
     }
 
     private static string ConvertHr(HtmlNode node, string text, List<string> parentTags)
     {
         return $"{DoubleNewLine}---{DoubleNewLine}";
-    }
-
-    private static string ConvertUl(HtmlNode node, string text, List<string> parentTags)
-    {
-        Console.WriteLine(node.ChildNodes.Count);
-        // Remove all text child nodes
-        if (parentTags.Contains("li"))
-        {
-            // Remove trailing newline if in nested list
-            return text.TrimEnd();
-        }
-        
-        return text;
     }
     
     private static string ConvertA(HtmlNode node, string text, List<string> parentTags)
