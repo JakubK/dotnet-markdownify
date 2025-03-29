@@ -400,6 +400,9 @@ FodyWeavers.xsd
 *.sln.iml
 
 
-*.html
-*.md
+
 *.idea
+
+
+Dotnet.Markdownify.Console/*.html
+Dotnet.Markdownify.Console/*.md
