@@ -16,7 +16,8 @@ public class MarkdownConverter
         var doc = new HtmlDocument();
         doc.LoadHtml(cleanHtml);
         
-        return await ProcessTag(doc.DocumentNode, []);
+        var md = await ProcessTag(doc.DocumentNode, []);
+        return md.Replace("\r\n", NewLine);
     }
     
     private static readonly Dictionary<string, Func<HtmlNode, string, List<string>, string>> ConversionFunctions =
@@ -62,10 +63,8 @@ public class MarkdownConverter
         
         childStrings = childStrings.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
         
-        // Join all child text strings into a single string
         var text = string.Join(string.Empty, childStrings);
         
-        // Apply this tag final conversion function
         var convertFn = GetConversionFunction(node.Name);
         var value = convertFn(node, text, parentTags);
         return value;
@@ -109,11 +108,11 @@ public class MarkdownConverter
         var isHeadRowMissing = (isFirstRow && node.ParentNode.Name != "tbody") ||
                                 (isFirstRow && node.ParentNode.Name == "tbody" &&
                                  node.ParentNode.ParentNode.SelectNodes(".//thead")?.Count < 1);
-
+        
         var overline = new StringBuilder();
         var underline = new StringBuilder();
         var fullColspan = 0;
-
+        
         foreach (var cell in cells)
         {
             var cellColspan = cell.GetAttributeValue("colspan", string.Empty);
@@ -126,32 +125,35 @@ public class MarkdownConverter
                 fullColspan += 1;
             }
         }
-
+        
         if ((isHeadRow || (isHeadRowMissing && tableInferHeader)) && isFirstRow)
         {
-            underline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("---", fullColspan)) + " |");
+            underline.AppendLine("|" + string.Join("|", Enumerable.Repeat("---", fullColspan)) + "|");
         }
         else if ((isHeadRowMissing && !tableInferHeader) ||
                  (isFirstRow && (node.ParentNode.Name == "table" ||
                                  (node.ParentNode.Name == "tbody" && node.ParentNode.PreviousSibling == null))))
         {
-            overline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("", fullColspan)) + " |");
-            overline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("---", fullColspan)) + " |");
+            overline.AppendLine(" | " + string.Join(" | ", Enumerable.Repeat("", fullColspan)) + " |");
+            overline.AppendLine(" | " + string.Join(" |", Enumerable.Repeat("---", fullColspan)) + "|");
         }
 
-        return overline + "| " + node.InnerText.Trim() + NewLine + underline;
+        var innerText = string.Join("|",node.ChildNodes.Select(x => " " + x.InnerText.Trim() + " ").ToArray());
+        var value = overline + "|" + innerText + "|" + NewLine + underline;
+        return value;
     }
 
     private static string ConvertTd_Th(HtmlNode node, string text, List<string> parentTags)
     {
         var colspan = node.GetAttributeValue("colspan", 1);
         var colSpanSuffix = string.Concat(Enumerable.Repeat(" |", colspan));
-        return ' ' + text.Trim().Replace(NewLine, " ") + colSpanSuffix;
+        var value = ' ' + text.Trim().Replace(NewLine, " ") + colSpanSuffix;
+        return value;
     }
 
     private static string ConvertTable(HtmlNode node, string text, List<string> parentTags)
     {
-        return $"{DoubleNewLine}{text}{DoubleNewLine}";
+        return $"{NewLine}{text}";
     }
     
     private static string ConvertCode(HtmlNode node, string text, List<string> parentTags)
@@ -260,7 +262,7 @@ public class MarkdownConverter
 
     private static string ConvertPre(HtmlNode node, string text, List<string> parentTags)
     {
-        return $"{DoubleNewLine}```{NewLine}{text}{NewLine}```{DoubleNewLine}";
+        return $"{NewLine}```{NewLine}{text}{NewLine}```{NewLine}";
     }
 
     private static string NoOpTransform(HtmlNode node, string text, List<string> parentTags)

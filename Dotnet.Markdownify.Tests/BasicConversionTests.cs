@@ -19,4 +19,12 @@ public class BasicConversionTests
         var md = await sut.ConvertAsync("<div>Hello</div>");
         Assert.Equal($"{NewLine}Hello{NewLine}", md);
     }
+
+    [Fact]
+    public async Task TestHn()
+    {
+        var sut = new MarkdownConverter();
+        var md = await sut.ConvertAsync("<h1>Hello</h1>");
+        Assert.Equal($"{NewLine}# Hello{NewLine}", md);
+    }
 }
