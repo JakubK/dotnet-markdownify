@@ -7,6 +7,9 @@ namespace Dotnet.Markdownify;
 
 public class MarkdownConverter
 {
+    private static readonly string DoubleNewLine = string.Concat(Enumerable.Repeat(Environment.NewLine, 2));
+    private static readonly string NewLine = Environment.NewLine;
+    
     public async Task<string> ConvertAsync(string html)
     {
         var doc = new HtmlDocument();
@@ -63,11 +66,11 @@ public class MarkdownConverter
         var text = string.Join(string.Empty, childStrings);
         
         // Apply this tag final conversion function
-        var convertFn = GetConversionFunctionCached(node.Name);
+        var convertFn = GetConversionFunction(node.Name);
         return convertFn(node, text, parentTags);
     }
 
-    private Func<HtmlNode, string, List<string>, string>  GetConversionFunctionCached(string nodeName)
+    private Func<HtmlNode, string, List<string>, string>  GetConversionFunction(string nodeName)
     {
         if (TagConsts.MarkdownIgnoreTags.Contains(nodeName))
         {
@@ -135,19 +138,19 @@ public class MarkdownConverter
             overline.AppendLine("| " + string.Join(" | ", Enumerable.Repeat("---", fullColspan)) + " |");
         }
 
-        return overline + "| " + node.InnerText.Trim() + "\n" + underline;
+        return overline + "| " + node.InnerText.Trim() + NewLine + underline;
     }
 
     private static string ConvertTd_Th(HtmlNode node, string text, List<string> parentTags)
     {
         var colspan = node.GetAttributeValue("colspan", 1);
         var colSpanSuffix = string.Concat(Enumerable.Repeat(" |", colspan));
-        return ' ' + text.Trim().Replace("\n", " ") + colSpanSuffix;
+        return ' ' + text.Trim().Replace(NewLine, " ") + colSpanSuffix;
     }
 
     private static string ConvertTable(HtmlNode node, string text, List<string> parentTags)
     {
-        return $"\n\n{text}\n\n";
+        return $"{DoubleNewLine}{text}{DoubleNewLine}";
     }
     
     private static string ConvertCode(HtmlNode node, string text, List<string> parentTags)
@@ -173,7 +176,7 @@ public class MarkdownConverter
     {
         if (string.IsNullOrEmpty(text))
         {
-            return "\n";
+            return NewLine;
         }
 
         // Determine which character to use for bullet
@@ -218,12 +221,12 @@ public class MarkdownConverter
 
         text = RegexConsts.ReLineWithContent.Replace(text, match => match.Groups[1].Value.Length > 0 ? bulletIndent + match.Groups[1].Value : string.Empty);
         text = bullet + text.Substring(bulletWidth);
-        return $"{text}\n";
+        return $"{text}{NewLine}";
     }
 
     private static string ConvertHr(HtmlNode node, string text, List<string> parentTags)
     {
-        return "\n\n---\n\n";
+        return $"{DoubleNewLine}---{DoubleNewLine}";
     }
 
     private static string ConvertUl(HtmlNode node, string text, List<string> parentTags)
@@ -236,9 +239,9 @@ public class MarkdownConverter
         }
         if (nextSibling != null && !TagConsts.ListTags.Contains(nextSibling.Name))
         {
-            return $"\n\n{text}\n";
+            return $"{DoubleNewLine}{text}{NewLine}";
         }
-        return $"\n\n{text}";
+        return $"{DoubleNewLine}{text}";
     }
     
     private static string ConvertA(HtmlNode node, string text, List<string> parentTags)
@@ -252,33 +255,27 @@ public class MarkdownConverter
     {
         var hLevel = int.Parse(RegexConsts.ReHtmlHeading.Match(node.Name).Groups[1].Value);
         var mdHeadingPrefix = new string('#', hLevel);
-        return $"\n{mdHeadingPrefix} {text}\n";
+        return $"{NewLine}{mdHeadingPrefix} {text}{NewLine}";
     }
 
     private static string ConvertDiv(HtmlNode node, string text, List<string> parentTags)
     {
         text = text.Trim();
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        return $"\n{text}\n";
+        return $"{NewLine}{text}{NewLine}";
     }
 
     private static string ConvertPre(HtmlNode node, string text, List<string> parentTags)
     {
-        if (string.IsNullOrEmpty(text))
-        {
-            return string.Empty;
-        }
-
-        return $"\n\n```\n{text}\n```\n\n";
+        return $"{DoubleNewLine}```{NewLine}{text}{NewLine}```{DoubleNewLine}";
     }
 
     private static string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
     {
         Console.WriteLine("Missing handler for " + node.Name);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return string.Empty;
+        }
         return WebUtility.HtmlDecode(text);
     }
 
