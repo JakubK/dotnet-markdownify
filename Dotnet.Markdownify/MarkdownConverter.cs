@@ -208,6 +208,10 @@ public class MarkdownConverter
 
         bullet += " ";
         var bulletWidth = bullet.Length;
+        if (node.ParentNode.Name == "ol")
+        {
+            bulletWidth--;
+        }
         var bulletIndent = new string(' ', bulletWidth);
 
         text = RegexConsts.ReLineWithContent.Replace(text, match => match.Groups[1].Value.Length > 0 ? bulletIndent + match.Groups[1].Value : string.Empty);
@@ -215,15 +219,18 @@ public class MarkdownConverter
         
         if (node.ParentNode.FirstChild == node && parentTags.Contains("li"))
         {
-            return $"{NewLine}{text}{NewLine}";
-        }
-        
-        if (node.ParentNode.LastChild == node && parentTags.Contains("li"))
+            text = $"{NewLine}{text}{NewLine}";
+        } 
+        else if (node.ParentNode.LastChild == node && parentTags.Contains("li"))
         {
-            return $"{text}";
+            text = $"{text}";
+        }
+        else
+        {
+            text = $"{text}{NewLine}";
         }
         
-        return $"{text}{NewLine}";
+        return text;
     }
 
     private static string ConvertHr(HtmlNode node, string text, List<string> parentTags)
