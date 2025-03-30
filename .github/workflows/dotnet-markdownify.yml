@@ -1,0 +1,26 @@
+name: Publish Dotnet.Markdownify to NuGet
+
+on: [workflow_dispatch]
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install .NET 9.0.x
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+          
+      - name: Run Tests
+        run: dotnet test src/Dotnet.Markdownify.Tests/Dotnet.Markdownify.Tests.csproj
+
+      - name: Run Pack
+        run: dotnet pack src/Dotnet.Markdownify/Dotnet.Markdownify.csproj -c Release
+
+      - name: Publish to NuGet
+        run: |
+          find . -name '*.nupkg' -exec dotnet nuget push "{}" -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }} --skip-duplicate \;

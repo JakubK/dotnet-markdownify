@@ -3,4 +3,10 @@
   <Project Path="Dotnet.Markdownify.Tests\Dotnet.Markdownify.Tests.csproj" Type="Classic C#" />
   <Project Path="Dotnet.Markdownify.Tool\Dotnet.Markdownify.Tool.csproj" Type="Classic C#" />
   <Project Path="Dotnet.Markdownify/Dotnet.Markdownify.csproj" Type="Classic C#" />
+  <Folder Name="Related files">
+    <File Path=".gitignore"/>
+    <File Path="README.md"/>
+    <File Path=".github/workflows/dotnet-markdownify.yml"/>
+    <File Path=".github/workflows/dotnet-markdownify-tool.yml"/>
+  </Folder>
 </Solution>
