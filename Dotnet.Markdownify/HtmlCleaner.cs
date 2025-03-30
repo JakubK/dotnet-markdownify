@@ -19,6 +19,11 @@ public class HtmlCleaner
     
     private static void CleanNodes(HtmlNode node)
     {
+        if (node.Name == "pre")
+        {
+            return;
+        }
+        
         if (node.NodeType == HtmlNodeType.Text)
         {
             node.InnerHtml = node.InnerHtml.Trim();

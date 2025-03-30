@@ -60,8 +60,15 @@ public class MarkdownConverter
             var converted = await ProcessElement(child, parentTagsForChildren);
             childStrings.Add(converted);
         }
-        
-        childStrings = childStrings.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+
+        if (parentTags.Contains("pre"))
+        {
+            childStrings = childStrings.Where(x => !string.IsNullOrEmpty(x)).ToList();
+        }
+        else
+        {
+            childStrings = childStrings.Where(x => !string.IsNullOrWhiteSpace(x)).ToList();
+        }
         
         var text = string.Join(string.Empty, childStrings);
         
@@ -288,10 +295,11 @@ public class MarkdownConverter
 
     private string ProcessText(HtmlNode node, List<string> parentTags)
     {
-        if (string.IsNullOrWhiteSpace(node.InnerText))
+        if (string.IsNullOrWhiteSpace(node.InnerText) && !parentTags.Contains("pre"))
         {
             return node.InnerText.Trim();
         }
+        
         return node.InnerText;
     }
 }

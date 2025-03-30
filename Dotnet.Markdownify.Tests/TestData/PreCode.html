@@ -1,9 +1,6 @@
-﻿<pre>
-  <code>
-    <span># setup our HNSW parameters</span>
-    d <span>=</span> <span>128</span>  <span># vector size</span>
-    M <span >=</span> <span>32</span>
-    index <span>=</span> faiss<span>.</span>IndexHNSWFlat<span>(</span>d<span>,</span> M<span>)</span>
-    <span>print</span><span>(</span>index<span>.</span>hnsw<span>)</span>
-  </code>  
-</pre>
+﻿<pre class="relative overflow-auto language-python line-numbers" tabindex="0"><code class="language-python"><span class="token comment"># setup our HNSW parameters</span>
+d <span class="token operator">=</span> <span class="token number">128</span>  <span class="token comment"># vector size</span>
+M <span class="token operator">=</span> <span class="token number">32</span>
+
+index <span class="token operator">=</span> faiss<span class="token punctuation">.</span>IndexHNSWFlat<span class="token punctuation">(</span>d<span class="token punctuation">,</span> M<span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span>index<span class="token punctuation">.</span>hnsw<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
