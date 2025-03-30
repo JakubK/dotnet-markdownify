@@ -16,10 +16,10 @@ jobs:
           dotnet-version: 9.0.x
           
       - name: Run Tests
-        run: dotnet test src/Dotnet.Markdownify.Tests/Dotnet.Markdownify.Tests.csproj
+        run: dotnet test Dotnet.Markdownify.Tests/Dotnet.Markdownify.Tests.csproj
 
       - name: Run Pack
-        run: dotnet pack src/Dotnet.Markdownify/Dotnet.Markdownify.csproj -c Release
+        run: dotnet pack Dotnet.Markdownify/Dotnet.Markdownify.csproj -c Release
 
       - name: Publish to NuGet
         run: |
