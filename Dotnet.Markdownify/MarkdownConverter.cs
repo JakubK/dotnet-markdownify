@@ -297,9 +297,9 @@ public class MarkdownConverter
     {
         if (string.IsNullOrWhiteSpace(node.InnerText) && !parentTags.Contains("pre"))
         {
-            return node.InnerText.Trim();
+            return WebUtility.HtmlDecode(node.InnerText.Trim());
         }
         
-        return node.InnerText;
+        return WebUtility.HtmlDecode(node.InnerText);
     }
 }
