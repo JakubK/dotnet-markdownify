@@ -274,7 +274,6 @@ public class MarkdownConverter
 
     private static string NoOpTransform(HtmlNode node, string text, List<string> parentTags)
     {
-        Console.WriteLine("Missing handler for " + node.Name);
         if (string.IsNullOrWhiteSpace(text))
         {
             return string.Empty;
