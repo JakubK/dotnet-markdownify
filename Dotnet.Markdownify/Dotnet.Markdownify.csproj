@@ -5,10 +5,26 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <VersionPrefix>0.0.0</VersionPrefix>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    </PropertyGroup>
+    
+    <PropertyGroup>
+        <PackageId>DotMarkdownify</PackageId>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/JakubK/dotnet-markdownify</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JakubK/dotnet-markdownify</RepositoryUrl>
+        <Authors>JakubK</Authors>
+        <RepositoryType>git</RepositoryType>
+        <Description>Simple .NET Library for converting HTML into Markdown</Description>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.12.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath=""/>
     </ItemGroup>
 
 </Project>
