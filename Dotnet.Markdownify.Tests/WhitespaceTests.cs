@@ -9,7 +9,7 @@ public class WhitespaceTests
         var html = await File.ReadAllTextAsync("TestData/PreCode.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/PreCode.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }

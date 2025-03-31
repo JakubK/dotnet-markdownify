@@ -8,7 +8,7 @@ namespace Dotnet.Markdownify;
 
 public class MarkdownConverter
 {
-    public async Task<string> ConvertAsync(string html)
+    public string Convert(string html)
     {
         var cleaner = new HtmlCleaner();
         var cleanHtml = cleaner.CleanHtml(html);
@@ -16,7 +16,7 @@ public class MarkdownConverter
         var doc = new HtmlDocument();
         doc.LoadHtml(cleanHtml);
         
-        var md = await ProcessTag(doc.DocumentNode, []);
+        var md = ProcessTag(doc.DocumentNode, []);
         return md.Replace("\r\n", NewLine);
     }
     
@@ -42,7 +42,7 @@ public class MarkdownConverter
             ["td"] = ConvertTd_Th
         };
     
-    private async Task<string> ProcessTag(HtmlNode node, List<string> parentTags)
+    private string ProcessTag(HtmlNode node, List<string> parentTags)
     {
         if (TagConsts.MarkdownIgnoreTags.Contains(node.Name))
         {
@@ -57,7 +57,7 @@ public class MarkdownConverter
         var childStrings = new List<string>();
         foreach (var child in childrenToConvert)
         {
-            var converted = await ProcessElement(child, parentTagsForChildren);
+            var converted = ProcessElement(child, parentTagsForChildren);
             childStrings.Add(converted);
         }
 
@@ -281,7 +281,7 @@ public class MarkdownConverter
         return WebUtility.HtmlDecode(text);
     }
 
-    private  async Task<string> ProcessElement(HtmlNode? node, List<string> parentTags)
+    private string ProcessElement(HtmlNode? node, List<string> parentTags)
     {
         if (node.NodeType == HtmlNodeType.Text)
         {
@@ -289,7 +289,7 @@ public class MarkdownConverter
             return text;
         }
         
-        return await ProcessTag(node, parentTags);
+        return ProcessTag(node, parentTags);
     }
 
     private string ProcessText(HtmlNode node, List<string> parentTags)

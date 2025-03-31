@@ -9,7 +9,7 @@ public class ListTests
         var html = await File.ReadAllTextAsync("TestData/Ul.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/Ul.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }
@@ -21,7 +21,7 @@ public class ListTests
         var html = await File.ReadAllTextAsync("TestData/Ol.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/Ol.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }
@@ -33,7 +33,7 @@ public class ListTests
         var html = await File.ReadAllTextAsync("TestData/NestedOl.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/NestedOl.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }
@@ -45,7 +45,7 @@ public class ListTests
         var html = await File.ReadAllTextAsync("TestData/NestedUl.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/NestedUl.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }

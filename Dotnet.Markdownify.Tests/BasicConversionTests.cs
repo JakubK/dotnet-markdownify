@@ -5,85 +5,85 @@ namespace Dotnet.Markdownify.Tests;
 public class BasicConversionTests
 {
     [Fact]
-    public async Task TestSpan()
+    public void TestSpan()
     {
         var sut = new MarkdownConverter();
-        var md = await sut.ConvertAsync("<span>Hello</span>");
+        var md = sut.Convert("<span>Hello</span>");
         Assert.Equal("Hello", md);
     }
     
     [Fact]
-    public async Task TestDiv()
+    public void TestDiv()
     {
         var sut = new MarkdownConverter();
-        var md = await sut.ConvertAsync("<div>Hello</div>");
+        var md = sut.Convert("<div>Hello</div>");
         Assert.Equal($"{NewLine}Hello{NewLine}", md);
     }
 
     [Fact]
-    public async Task TestHn()
+    public void TestHn()
     {
         var sut = new MarkdownConverter();
-        var md = await sut.ConvertAsync("<h1>Hello</h1>");
+        var md = sut.Convert("<h1>Hello</h1>");
         Assert.Equal($"{NewLine}# Hello{NewLine}", md);
     }
 
     [Fact]
-    public async Task TestLink()
+    public void TestLink()
     {
         var sut = new MarkdownConverter();
-        var md = await sut.ConvertAsync("<a href=\"http://example.com\">Hello</a>");
+        var md = sut.Convert("<a href=\"http://example.com\">Hello</a>");
         Assert.Equal($"[Hello](http://example.com)", md);
     }
 
     [Fact]
-    public async Task TestBold()
+    public void TestBold()
     {
         var sut = new MarkdownConverter();
         
-        var mdB = await sut.ConvertAsync("<b>Hello</b>");
-        var mdStrong = await sut.ConvertAsync("<strong>Hello</strong>");
+        var mdB = sut.Convert("<b>Hello</b>");
+        var mdStrong = sut.Convert("<strong>Hello</strong>");
         
         Assert.Equal(mdB, mdStrong);
         Assert.Equal($"**Hello**", mdStrong);
     }
     
     [Fact]
-    public async Task TestItalic()
+    public void TestItalic()
     {
         var sut = new MarkdownConverter();
         
-        var md = await sut.ConvertAsync("<i>Hello</i>");
+        var md = sut.Convert("<i>Hello</i>");
         
         Assert.Equal($"_Hello_", md);
     }
     
     [Fact]
-    public async Task TestCode()
+    public void TestCode()
     {
         var sut = new MarkdownConverter();
         
-        var md = await sut.ConvertAsync("<code>Hello</code>");
+        var md = sut.Convert("<code>Hello</code>");
         
         Assert.Equal($"`Hello`", md);
     }
     
     [Fact]
-    public async Task TestHr()
+    public void TestHr()
     {
         var sut = new MarkdownConverter();
         
-        var md = await sut.ConvertAsync("<hr>");
+        var md = sut.Convert("<hr>");
         
         Assert.Equal($"{DoubleNewLine}---{DoubleNewLine}", md);
     }
 
     [Fact]
-    public async Task TestImg()
+    public void TestImg()
     {
         var sut = new MarkdownConverter();
         
-        var md = await sut.ConvertAsync("<img src=\"http://example.com/test.png\" alt=\"Image title\"/>");
+        var md = sut.Convert("<img src=\"http://example.com/test.png\" alt=\"Image title\"/>");
         
         Assert.Equal($"![Image title](http://example.com/test.png)", md);
     }

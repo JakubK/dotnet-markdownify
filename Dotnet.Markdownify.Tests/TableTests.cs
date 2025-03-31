@@ -9,7 +9,7 @@ public class TableTests
         var html = await File.ReadAllTextAsync("TestData/Table.html");
         var expectedMd = await File.ReadAllTextAsync("TestData/Table.md");
         
-        var md = await sut.ConvertAsync(html);
+        var md = sut.Convert(html);
         
         Assert.Equal(expectedMd, md);
     }

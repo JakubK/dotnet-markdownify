@@ -9,7 +9,7 @@ try
 {
     var converter = new MarkdownConverter();
     var html = await File.ReadAllTextAsync(inputHtmlPath);
-    var md = await converter.ConvertAsync(html);
+    var md = converter.Convert(html);
 
     await File.WriteAllTextAsync(outputMdPath, md);
 }
