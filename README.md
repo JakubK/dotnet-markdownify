@@ -7,7 +7,7 @@ Simple dotnet library for converting HTML into Markdown.
 To use `dotnet-markdownify` in your project, you can:
 
 - simply clone this repo and add reference to `Dotnet.Markdownify.csproj` or
-- Install via nuget (TODO)
+- Install via nuget `dotnet add package DotMarkdownify`
 
 ## Usage
 
