@@ -18,9 +18,6 @@ jobs:
       - name: Run Tests
         run: dotnet test Dotnet.Markdownify.Tests/Dotnet.Markdownify.Tests.csproj
 
-      - name: Run Pack
-        run: dotnet pack Dotnet.Markdownify/Dotnet.Markdownify.csproj -c Release
-
       - name: Publish to NuGet
         run: |
           find . -name '*.nupkg' -exec dotnet nuget push "{}" -s https://api.nuget.org/v3/index.json -k ${{ secrets.NUGET_API_KEY }} --skip-duplicate \;
