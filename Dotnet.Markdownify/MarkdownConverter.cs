@@ -17,7 +17,7 @@ public class MarkdownConverter
         doc.LoadHtml(cleanHtml);
         
         var md = ProcessTag(doc.DocumentNode, []);
-        return md.Replace("\r\n", NewLine);
+        return md.Replace(WindowsNewLine, NewLine);
     }
     
     private static readonly Dictionary<string, Func<HtmlNode, string, List<string>, string>> ConversionFunctions =
@@ -39,7 +39,8 @@ public class MarkdownConverter
             ["table"] = ConvertTable,
             ["tr"] = ConvertTr,
             ["th"] = ConvertTd_Th,
-            ["td"] = ConvertTd_Th
+            ["td"] = ConvertTd_Th,
+            ["blockquote"] = ConvertBlockquote,
         };
     
     private string ProcessTag(HtmlNode node, List<string> parentTags)
@@ -104,49 +105,57 @@ public class MarkdownConverter
 
         return $"![{alt}]({src})";
     }
+    
+    private static string ConvertBlockquote(HtmlNode node, string text, List<string> parentTags)
+    {
+        var updatedText = RegexConsts.ReLineWithContent.Replace(text, match =>
+        {
+            var blockquoteContent = match.Groups[1].Value;
+            if (blockquoteContent.Length > 0)
+            {
+                if (blockquoteContent.StartsWith(">"))
+                {
+                    return $">{blockquoteContent}";
+                }
+                return $"> {blockquoteContent}";
+            }
+            
+            return ">";
+        });
+        updatedText = updatedText.Replace($">{NewLine}>", ">");
+        if (updatedText.EndsWith(">"))
+        {
+            updatedText = updatedText.Substring(0, updatedText.Length - 1);
+        }
+        if (updatedText.EndsWith(NewLine))
+        {
+            updatedText = updatedText.Substring(0, updatedText.Length - 1);
+        }
+        return $"{NewLine}{updatedText}{NewLine}";
+    }
 
     private static string ConvertTr(HtmlNode node, string text, List<string> parentTags)
     {
-        var tableInferHeader = false;
-        var cells = node.SelectNodes(".//td|.//th")?.ToList() ?? new List<HtmlNode>();
-        var isFirstRow = node.PreviousSibling == null;
-        var isHeadRow = cells.All(cell => cell.Name == "th") ||
-                         (node.ParentNode.Name == "thead" && node.ParentNode.SelectNodes(".//tr")?.Count == 1);
-        var isHeadRowMissing = (isFirstRow && node.ParentNode.Name != "tbody") ||
-                                (isFirstRow && node.ParentNode.Name == "tbody" &&
-                                 node.ParentNode.ParentNode.SelectNodes(".//thead")?.Count < 1);
-        
-        var overline = new StringBuilder();
+        var cells = node.SelectNodes(".//td|.//th").ToList();
+        var isFirstRow = node.ParentNode.SelectNodes(".//tr")[0] == node;
+        var isHeadRow = cells.All(cell => cell.Name == "th") || node.ParentNode.Name == "thead";
+        var isHeadRowMissing = isFirstRow && !isHeadRow && node.ParentNode.Name == "tbody" && node.ParentNode.ParentNode.SelectNodes(".//thead") == null;
+    
         var underline = new StringBuilder();
         var fullColspan = 0;
-        
+    
         foreach (var cell in cells)
         {
-            var cellColspan = cell.GetAttributeValue("colspan", string.Empty);
-            if (cellColspan != string.Empty && int.TryParse(cellColspan, out int colspan))
-            {
-                fullColspan += colspan;
-            }
-            else
-            {
-                fullColspan += 1;
-            }
+            fullColspan += 1;
         }
-        
-        if ((isHeadRow || (isHeadRowMissing && tableInferHeader)) && isFirstRow)
+    
+        if ((isFirstRow && isHeadRow) || isHeadRowMissing)
         {
             underline.AppendLine("|" + string.Join("|", Enumerable.Repeat("---", fullColspan)) + "|");
         }
-        else if ((isHeadRowMissing && !tableInferHeader) ||
-                 (isFirstRow && (node.ParentNode.Name == "table" ||
-                                 (node.ParentNode.Name == "tbody" && node.ParentNode.PreviousSibling == null))))
-        {
-            overline.AppendLine(" | " + string.Join(" | ", Enumerable.Repeat("", fullColspan)) + " |");
-            overline.AppendLine(" | " + string.Join(" |", Enumerable.Repeat("---", fullColspan)) + "|");
-        }
-
-        var innerText = string.Join("|",node.ChildNodes.Select(x => " " + x.InnerText.Trim() + " ").ToArray());
-        var value = overline + "|" + innerText + "|" + NewLine + underline;
+    
+        var innerText = string.Join("|", cells.Select(x => " " + x.InnerText.Trim() + " "));
+        var value = "|" + innerText + "|" + "\n" + underline;
         return value;
     }
 

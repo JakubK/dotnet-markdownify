@@ -7,7 +7,7 @@ public class HtmlCleaner
 {
     public string CleanHtml(string html)
     {
-        html = html.Replace("\r\n", NewLine);
+        html = html.Replace(WindowsNewLine, NewLine);
 
         var doc = new HtmlDocument();
         doc.LoadHtml(html);

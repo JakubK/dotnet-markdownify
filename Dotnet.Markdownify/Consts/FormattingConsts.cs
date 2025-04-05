@@ -2,6 +2,7 @@
 
 public static class FormattingConsts
 {
+    public static readonly string WindowsNewLine = "\r\n";
     public static readonly string DoubleNewLine = "\n\n";
     public static readonly string NewLine = "\n";
 }

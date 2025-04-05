@@ -13,4 +13,16 @@ public class TableTests
         
         Assert.Equal(expectedMd, md);
     }
+    
+    [Fact]
+    public async Task TableWithoutHead_WorksAsExpected()
+    {
+        var sut = new MarkdownConverter();
+        var html = await File.ReadAllTextAsync("TestData/HeadlessTable.html");
+        var expectedMd = await File.ReadAllTextAsync("TestData/HeadlessTable.md");
+        
+        var md = sut.Convert(html);
+        
+        Assert.Equal(expectedMd, md);
+    }
 }
